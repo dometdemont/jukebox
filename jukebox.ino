@@ -5,6 +5,7 @@
 #include <MD_MIDIFile.h>
 SdFat  SD;
 MD_MIDIFile SMF;
+SdFile wifiDefFile;
 
 #define USE_MIDI  1   // set to 1 to enable MIDI output, otherwise debug output
 
@@ -77,8 +78,6 @@ void sysexCallback(sysex_event *pev)
   }
 }
 
-#define SSID      "d3m"
-#define KEY       "buxtehude"
 // check your access point's security mode, mine was WPA20-PSK
 // if yours is different you'll need to change the AUTH constant, see the file WiFly.h for avalable security codes
 #define AUTH      WIFLY_AUTH_WPA2_PSK
@@ -242,25 +241,38 @@ void setup()
  
     wifly.sendCommand("set comm open *OPEN*\r"); // set the string that the wifi shield will output when a connection is opened
     delay(100);
- 
-    DEBUGln("Join " SSID );
-    if (wifly.join(SSID, KEY, AUTH)) {
-        DEBUGln("OK");
-    } else {
-        DEBUGln("Failed");
-    }
- 
-    delay(5000);
- 
-    wifly.sendCommand("get ip\r");
-    char c;
- 
-    while (wifly.receive((uint8_t *)&c, 1, 300) > 0) { // print the response from the get ip command
-        DEBUG((char)c);
-    }
- 
-    DEBUGln("Web server ready");
+  
+    if (wifiDefFile.open("WIFI.DEF", O_READ)) {
+      // read from the file 2 lines: the SSID and the password
+      int len;
+      char SSID[30]; 
+      char KEY[30];
+      len = wifiDefFile.fgets(SSID, sizeof(SSID)); SSID[len]=0;
+      len = wifiDefFile.fgets(KEY, sizeof(KEY)); SSID[len]=0;
+      
+      DEBUGln("Join " SSID );
+      if (wifly.join(SSID, KEY, AUTH)) {
+          DEBUGln("OK");
+          delay(5000);
 
+          wifly.sendCommand("get ip\r");
+          char c;
+
+          while (wifly.receive((uint8_t *)&c, 1, 300) > 0) { // print the response from the get ip command
+              DEBUG((char)c);
+          }
+
+          DEBUGln("Web server ready");
+      } else {
+          DEBUGln("Failed");
+      }
+      // close the file:
+      wifiDefFile.close();
+    }
+    else {
+      DEBUGln("opening WIFI.DEF file on SD failed");
+    }
+ 
     // Initialize SD
     if (!SD.begin(SD_SELECT, SPI_FULL_SPEED))
     {
