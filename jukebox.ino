@@ -7,7 +7,7 @@ SdFat  SD;
 MD_MIDIFile SMF;
 SdFile wifiDefFile;
 
-#define USE_MIDI  1   // set to 1 to enable MIDI output, otherwise debug output
+#define USE_MIDI 0   // set to 1 to enable MIDI output, otherwise debug output
 
 #if USE_MIDI // set up for direct MIDI serial output
 
@@ -250,7 +250,7 @@ void setup()
       len = wifiDefFile.fgets(SSID, sizeof(SSID)); SSID[len]=0;
       len = wifiDefFile.fgets(KEY, sizeof(KEY)); SSID[len]=0;
       
-      DEBUGln("Join " SSID );
+      DEBUG("Join "); DEBUGln(SSID );
       if (wifly.join(SSID, KEY, AUTH)) {
           DEBUGln("OK");
           delay(5000);
